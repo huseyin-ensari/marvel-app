@@ -1,7 +1,62 @@
+import { useEffect, useState } from "react";
+import './styles/App.css';
+import { Header, HeroList, Loading, Pagination } from "./components";
+import { fetchHeros } from './api';
 
 function App() {
+
+  const [heros, setheros] = useState();
+  const [offset, setOffset] = useState(0);
+  const [totalData, setTotalData] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const limit = 12;
+  const page = offset / limit + 1;
+
+  async function getData() {
+    const data = await fetchHeros(limit, offset);
+    setheros(data?.data?.results);
+    setTotalData(data?.data?.total);
+    sessionStorage.setItem(page, JSON.stringify(data?.data?.results));
+    sessionStorage.setItem("total", data?.data?.total);
+    setLoading(false);
+    console.log(data);
+  }
+
+  const isExistSessionStorage = () => {
+    const data = JSON.parse(sessionStorage.getItem(page));
+    const total = sessionStorage.getItem("total");
+    if (!data) return false;
+    setheros(data);
+    setTotalData(total);
+    setLoading(false);
+    return true;
+  };
+
+  useEffect(() => {
+    setLoading(true);
+    if (!isExistSessionStorage()) {
+      getData();
+    }
+  }, [offset]);
+
+
   return (
-    <div className="App">app
+    <div id='parent'>
+      <Header />
+      {loading ? (
+        <Loading />
+      ) : (
+        <>
+          <HeroList heros={heros} />
+          <Pagination
+            offset={offset}
+            setOffset={setOffset}
+            limit={limit}
+            total={totalData}
+            page={page}
+          />
+        </>
+      )}
     </div>
   );
 }
